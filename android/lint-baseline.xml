@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.11.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.11.0)" variant="all" version="8.11.0">
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.tools.build:gradle than 8.7.2 is available: 8.13.1. (There is also a newer version of 8.7.𝑥 available, if upgrading to 8.13.1 is difficult: 8.7.3)"
+        errorLine1="    classpath &quot;com.android.tools.build:gradle:8.7.2&quot;"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="12"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of org.jetbrains.kotlin:kotlin-stdlib than 2.1.20 is available: 2.2.0"
+        errorLine1="  implementation &quot;org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version&quot;"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="80"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public long open(DataSpec dataSpec) throws IOException {"
+        errorLine2="                    ~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="25"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public long open(DataSpec dataSpec) throws IOException {"
+        errorLine2="                         ~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="25"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public int read(byte[] buffer, int offset, int length) throws IOException {"
+        errorLine2="                   ~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="30"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public Uri getUri() {"
+        errorLine2="                   ~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="43"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public void close() throws IOException {}"
+        errorLine2="                    ~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="48"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public void addTransferListener(TransferListener transferListener) {}"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="51"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        public void addTransferListener(TransferListener transferListener) {}"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4DataSource.java"
+            line="51"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        .setLooper(Looper.getMainLooper())"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4StreamPlayerModule.java"
+            line="62"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="            public DataSource createDataSource() {"
+        errorLine2="                              ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4StreamPlayerModule.java"
+            line="85"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        ProgressiveMediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4StreamPlayerModule.java"
+            line="90"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="        ProgressiveMediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory)"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4StreamPlayerModule.java"
+            line="90"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="                .createMediaSource(MediaItem.fromUri(Uri.parse(&quot;fmp4://stream&quot;)));"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4StreamPlayerModule.java"
+            line="91"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="UnsafeOptInUsageError"
+        message="This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`"
+        errorLine1="            player.setMediaSource(mediaSource);"
+        errorLine2="                   ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fmp4playerlib/Fmp4StreamPlayerModule.java"
+            line="95"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields (static reference to `PlayerView` which has field `shutterView` pointing to `View`); this is a memory leak"
+        errorLine1="  private static PlayerView playerView;"
+        errorLine2="          ~~~~~~">
+        <location
+            file="src/main/java/com/streamview/StreamView.java"
+            line="20"
+            column="11"/>
+    </issue>
+
+</issues>
