@@ -36,7 +36,6 @@ public class Fmp4AVPlayerView: UIView {
   static func AttachPlayerToLayer(avplayer : AVPlayer) {
     playerViewController.player = avplayer
   }
-
   
   public override func layoutSubviews() {
     super.layoutSubviews()

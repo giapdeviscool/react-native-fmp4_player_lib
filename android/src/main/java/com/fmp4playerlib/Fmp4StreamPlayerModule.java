@@ -16,7 +16,7 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DataSource.Factory;
 import androidx.media3.datasource.DataSpec;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
-
+import com.facebook.react.bridge.LifecycleEventListener;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.stream.Stream;
@@ -32,7 +32,7 @@ import okio.ByteString;
 import androidx.media3.common.AudioAttributes;
 import android.media.AudioManager;
 
-public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec {
+public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec implements LifecycleEventListener {
 
     public static final String NAME = "NativeFmp4PlayerLib";
     public AudioAttributes attributes;
@@ -41,9 +41,11 @@ public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec {
     private WebSocket webSocket;
     private PipedOutputStream pipedOutputStream;
     private PipedInputStream pipedInputStream;
-
+    private boolean isStreaming = false;
+    private boolean isListenerAdded = false;
     public Fmp4StreamPlayerModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        reactContext.addLifecycleEventListener(this);
         initPlayer(reactContext);
     }
 
@@ -51,8 +53,10 @@ public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec {
     public String getName() {
         return NAME;
     }
-
+    
+    
     public void initPlayer(Context context) {
+
         if (player != null) {
             player.release(); // Giải phóng player nếu đã tồn tại
         }
@@ -69,16 +73,15 @@ public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec {
         }
     }
 
-    @Override
-    public double multiply(double a, double b) {
-        return a * b;
-    }
+
 
     @Override
     public void startStreaming() {
         if (player == null) {
             initPlayer(getReactApplicationContext());
+            isStreaming = true;
         }
+        
         DataSource.Factory dataSourceFactory = new DataSource.Factory() {
             @Override
             public DataSource createDataSource() {
@@ -150,6 +153,22 @@ public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec {
             
         }
     }
-
+    @Override
+    public void onHostResume() {
+        if(player != null) {
+            player.setPlayWhenReady(true);
+        } 
+    }
+    @Override
+    public void onHostPause() {
+        if(player != null) {
+            player.setPlayWhenReady(false);
+        }
+    }
+    @Override
+    public void onHostDestroy() {
+        stopStreaming();    
+        getReactApplicationContext().removeLifecycleEventListener(this);
+    }
     
 }

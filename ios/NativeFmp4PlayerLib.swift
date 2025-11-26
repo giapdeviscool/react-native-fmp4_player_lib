@@ -53,15 +53,11 @@ public class NativeFmp4PlayerLib: NSObject {
     self.socketTask = socketSession?.webSocketTask(with: request)
     readMessage()
   }
-  private func isInitSegment(_ data: Data) -> Bool {
-    return data.count > 8 && String(data: data.subdata(in: 5..<9), encoding: .ascii) == "ftyp"
-  }
   
   public func stopStreaming() {
     socketTask?.cancel(with: .goingAway, reason: nil)
     endStream = true
   }
-  
   
   @available(iOS 16.0, *)
   private func readMessage() {
@@ -133,23 +129,23 @@ public class NativeFmp4PlayerLib: NSObject {
   }
   
   private func startPlayer() {
-      connectStream = true
-      
-      let playlistURL = URL(string: "http://localhost:8080/playlist.m3u8")!
-     
+    connectStream = true
+    // setup for player  
+    let playlistURL = URL(string: "http://localhost:8080/playlist.m3u8")!  
       
     let asset = AVURLAsset(url: playlistURL)
-      let playerItem = AVPlayerItem(asset: asset)
-      playerItem.preferredForwardBufferDuration = 1.0
-      playerItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
-      NativeFmp4PlayerLib.player = AVPlayer(playerItem: playerItem)
-      NativeFmp4PlayerLib.player?.automaticallyWaitsToMinimizeStalling = false
-      Fmp4AVPlayerView.AttachPlayerToLayer(avplayer: NativeFmp4PlayerLib.player!)
-      
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-        NativeFmp4PlayerLib.player?.play()
-      }
+    let playerItem = AVPlayerItem(asset: asset)
+    //playerattach
+sda    playerItem.preferredForwardBufferDuration = 1.0
+    playerItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+    NativeFmp4PlayerLib.player = AVPlayer(playerItem: playerItem)
+    NativeFmp4PlayerLib.player?.automaticallyWaitsToMinimizeStalling = false
+    Fmp4AVPlayerView.AttachPlayerToLayer(avplayer: NativeFmp4PlayerLib.player!)
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+      NativeFmp4PlayerLib.player?.play()
     }
+  }
   
   private func WriteBufferToSegment() {
     var segmentData = Data()

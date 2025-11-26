@@ -22,12 +22,6 @@ RCT_EXPORT_MODULE(NativeFmp4PlayerLib)
     return std::make_shared<facebook::react::NativeFmp4PlayerLibSpecJSI>(params);
 }
 
-- (NSNumber *)multiply:(double)a b:(double)b {
-    NSNumber *result = @(a * b);
-
-    return result;
-}
-
 - (void)startStreaming { 
   if (@available(iOS 16.0, *)) {
     [nativeFmp4Module startStreaming];
