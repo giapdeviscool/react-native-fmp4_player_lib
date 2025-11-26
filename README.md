@@ -40,6 +40,8 @@ const [id, setId] = useState('');
                   onChangeText={newText => setText(newText)}
                   value={text}
             />
+
+// set Stream Id Here or on your application UI
 ```
 
 
