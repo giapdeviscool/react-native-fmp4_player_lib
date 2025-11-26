@@ -11,8 +11,17 @@ npm install react-native-fmp4_player_lib
 ## Require Version React 0.81 or newer
 
 ## Usage
-
-
+   - Go to page https://streaming.ermis.network and click forget password to register email
+   ![alt text](image.png)
+   - Create live Stream
+   ![alt text](image-1.png)
+   - Use OBS or Other Streaming software you have 
+   ![alt text](image-2.png)
+   - Get Stream Id from URL
+   ![alt text](image-3.png) 
+   -  Paste the stream key and rtmp link to Streaming SoftWare 
+   ![alt text](image-4.png)
+## Example
 ```js
 // View
 import { StreamView } from 'react-native-fmp4_player_lib';
