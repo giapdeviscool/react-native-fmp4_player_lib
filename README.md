@@ -15,11 +15,11 @@ npm install react-native-fmp4_player_lib
    ![alt text](image.png)
    - Create live Stream
    ![alt text](image-1.png)
-   - Use OBS or Other Streaming software you have 
+   - Get the stream key and rtmp Url
    ![alt text](image-2.png)
    - Get Stream Id from URL
    ![alt text](image-3.png) 
-   -  Paste the stream key and rtmp link to Streaming SoftWare 
+   - Use OBS or Other Streaming software you have Paste the stream key and rtmp URL to Streaming SoftWare 
    ![alt text](image-4.png)
 ## Example
 ```js
