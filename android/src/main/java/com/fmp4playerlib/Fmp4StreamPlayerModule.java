@@ -149,8 +149,7 @@ public class Fmp4StreamPlayerModule extends NativeFmp4PlayerLibSpec implements L
             new android.os.Handler(Looper.getMainLooper()).post(() -> {
                 player.release();
                 player = null;
-            });
-            
+            });           
         }
     }
     @Override

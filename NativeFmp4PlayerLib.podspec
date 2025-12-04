@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
 
   s.platforms    = { :ios => min_ios_version_supported }
   s.source       = { :git => "https://github.com/vghatori/react-native-fmp4_player_lib.git", :tag => "#{s.version}" }
-
+  
   s.source_files = "ios/**/*.{h,m,mm,swift,cpp}"
   s.private_header_files = "ios/**/*.h"
   s.swift_version = "5.0"
@@ -20,7 +20,12 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = {
   'ENABLE_USER_SCRIPT_SANDBOXING' => 'NO'
   }
-  s.vendored_frameworks = 'ios/Fmp4PlayerLibExample.xcframework'
   
+  s.vendored_frameworks = 'ios/Fmp4PlayerLibExample.xcframework'
+  spm_dependency(s,
+      url: 'https://github.com/vghatori/fmp4_parser_swift_package.git',
+      requirement: {kind: 'upToNextMajorVersion', minimumVersion: '1.0.0'},
+      products: ['ErmisFmp4Parser']
+  )
   install_modules_dependencies(s)
 end

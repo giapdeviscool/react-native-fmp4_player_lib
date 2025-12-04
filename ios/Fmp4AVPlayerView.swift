@@ -1,45 +1,43 @@
-//
-//  Fmp4AVPlayer.swift
-//  fmp4_player
-//
-//  Created by Giáp Phan Văn on 28/10/25.
-//
-
 import UIKit
 import AVFoundation
-import AVKit
-
+import VideoToolbox
 
 @objcMembers
 public class Fmp4AVPlayerView: UIView {
-  private static var avlayer : AVPlayerLayer?
-  private static var playerViewController = AVPlayerViewController()
-  override init(frame: CGRect) {
-      super.init(frame: frame)
-      commonInit()
-  }
 
-  required init?(coder: NSCoder) {
-      super.init(coder: coder)
-      commonInit()
-  }
+    private let displayLayer = AVSampleBufferDisplayLayer()
+    private let audioplayer = AVSampleBufferAudioRenderer()
+    private var controlTimebase: CMTimebase?
+    
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
 
-  private func commonInit() {
-    Fmp4AVPlayerView.playerViewController.showsPlaybackControls = true
-    self.addSubview(Fmp4AVPlayerView.playerViewController.view)
-  }
-  
-  public func setStreamID(_ Id : String) {
-    NativeFmp4PlayerLib.streamId = Id
-  }
-  
-  static func AttachPlayerToLayer(avplayer : AVPlayer) {
-    playerViewController.player = avplayer
-  }
-  
-  public override func layoutSubviews() {
-    super.layoutSubviews()
-    Fmp4AVPlayerView.playerViewController.view.frame = bounds
-  }
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    private func commonInit() {
+        backgroundColor = UIColor.systemGray5
+        displayLayer.videoGravity = .resizeAspect
+        displayLayer.backgroundColor = UIColor.black.cgColor
+        layer.addSublayer(displayLayer)
+    }
+    
+    public func setStreamID(_ Id: String) {
+      NativeFmp4PlayerLib.attachId(Id: Id)
+      NativeFmp4PlayerLib.attachPlayer(videoplayer: displayLayer, audioplayers: audioplayer)
+    }
+    
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        displayLayer.frame = bounds
+    }
+    
+ 
+    
 
 }

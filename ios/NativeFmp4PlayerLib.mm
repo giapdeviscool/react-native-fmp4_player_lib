@@ -23,11 +23,7 @@ RCT_EXPORT_MODULE(NativeFmp4PlayerLib)
 }
 
 - (void)startStreaming { 
-  if (@available(iOS 16.0, *)) {
-    [nativeFmp4Module startStreaming];
-  } else {
-    // Fallback on earlier versions
-  }
+  [nativeFmp4Module startStreaming];
 }
 
 - (void)stopStreaming { 
