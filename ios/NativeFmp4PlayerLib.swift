@@ -64,15 +64,13 @@ public class NativeFmp4PlayerLib: NSObject {
   }
   
   static func attachId(Id : String) {
-    //060f350f-9da8-422d-b14d-eb9642bea92a
+    // 	
     self.url = URL(string: "wss://streaming.ermis.network/stream-gate/software/Ermis-streaming/\(Id)")
   }
   
   static func attachPlayer(videoplayer : AVSampleBufferDisplayLayer, audioplayers : AVSampleBufferAudioRenderer) {
     self.videodisplayer = videoplayer
-    self.audioplayer = audioplayers
-    synchro.addRenderer(audioplayer!)
-    synchro.addRenderer(videodisplayer!)
+    self.audioplayer = audioplayers  
   }
   
   public func startStreaming() {
@@ -80,6 +78,8 @@ public class NativeFmp4PlayerLib: NSObject {
     var request = URLRequest(url: NativeFmp4PlayerLib.url!)
     request.addValue("fmp4", forHTTPHeaderField: "Sec-WebSocket-Protocol")
     self.socketTask = socketSession?.webSocketTask(with: request)
+    NativeFmp4PlayerLib.synchro.addRenderer(NativeFmp4PlayerLib.audioplayer!)
+    NativeFmp4PlayerLib.synchro.addRenderer(NativeFmp4PlayerLib.videodisplayer!)
     NativeFmp4PlayerLib.synchro.rate = 1.0
     readMessage()
   }
