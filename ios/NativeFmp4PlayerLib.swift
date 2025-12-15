@@ -202,7 +202,6 @@ public class NativeFmp4PlayerLib: NSObject {
       // Enqueue to video layer
     if NativeFmp4PlayerLib.videodisplayer!.isReadyForMoreMediaData {
       enqueueVideo(sampleBuffer)
-
 //           Start playback if not started
           if !isPlaying {
               NativeFmp4PlayerLib.synchro.setRate(1.0, time: timestamp)

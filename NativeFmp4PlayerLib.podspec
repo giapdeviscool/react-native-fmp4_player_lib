@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
   
   s.vendored_frameworks = 'ios/Fmp4PlayerLibExample.xcframework'
   spm_dependency(s,
-      url: 'https://github.com/vghatori/fmp4_parser_swift_package.git',
+      url: 'https://github.com/giapdeviscool/fmp4_parser_swift_package.git',
       requirement: {kind: 'upToNextMajorVersion', minimumVersion: '1.0.0'},
       products: ['ErmisFmp4Parser']
   )
