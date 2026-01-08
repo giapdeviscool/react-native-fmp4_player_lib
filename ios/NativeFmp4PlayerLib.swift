@@ -117,20 +117,24 @@ public class NativeFmp4PlayerLib: NSObject {
   }
 
   private func decodeFrame(_ data: Data) {
-    let frames : ParsedSegment = try! fmp4demux.parseSegment(payload: data)
+    let frames: ParsedSegment = try! fmp4demux.parseSegment(payload: data)
     
-    for frame in frames.videoFrames {
-      let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000);
-      decodeVideoFrame(frame.data, timestamp: timeStamp)
+    // Xử lý trên main queue để đảm bảo sync
+    DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
+        
+        for frame in frames.videoFrames {
+            // Giữ nguyên timescale gốc (thường là 90000)
+            let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000)
+            self.decodeVideoFrame(frame.data, timestamp: timeStamp)
+        }
+        
+        for frame in frames.audioFrames {
+            // Dùng timescale 90000 rồi convert sang 48000
+            let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000)
+            self.decodeAudioFrame(frame.data, timestamp: timeStamp)
+        }
     }
-      
-    for frame in frames.audioFrames {
-      let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 48000);
-      decodeAudioFrame(frame.data, timestamp: timeStamp)
-    }
-     
-
-    
   }
   
   private func decodeVideoFrame(_ data: Data, timestamp: CMTime) {
