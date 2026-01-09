@@ -1,12 +1,12 @@
 {
-  "originHash" : "882df376982edacad8c1fcd30f5198d8ac6c3d5e969f9cdf1bf91d08c9e85a8e",
+  "originHash" : "6e7b0f2f36fa5a267e8850d23a8afeeef8ab6eca2b612a13d35b61f1efea3dc8",
   "pins" : [
     {
       "identity" : "fmp4_parser_swift_package",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/vghatori/fmp4_parser_swift_package.git",
+      "location" : "https://github.com/giapdeviscool/fmp4_parser_swift_package.git",
       "state" : {
-        "revision" : "1f4e8184f7fc96d84b416524174a23b933fe1f9c",
+        "revision" : "6f35ea2c3117f00f6f21d92bd9784c53e96b3554",
         "version" : "1.0.0"
       }
     }

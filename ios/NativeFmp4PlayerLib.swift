@@ -73,21 +73,56 @@ public class NativeFmp4PlayerLib: NSObject {
     self.audioplayer = audioplayers  
   }
   
-  public func startStreaming() {
+  public func stopStreaming() {
+    socketTask?.cancel(with: .goingAway, reason: nil)
+    socketTask = nil
+    socketSession = nil
+    
+    // Stop synchronizer first
+    NativeFmp4PlayerLib.synchro.rate = 0.0
+    
+    // Remove renderers from synchronizer
+    if let audioPlayer = NativeFmp4PlayerLib.audioplayer {
+        NativeFmp4PlayerLib.synchro.removeRenderer(audioPlayer, at: .zero) { _ in }
+    }
+    if let videoDisplayer = NativeFmp4PlayerLib.videodisplayer {
+        NativeFmp4PlayerLib.synchro.removeRenderer(videoDisplayer, at: .zero) { _ in }
+    }
+    
+    // Flush renderers
+    NativeFmp4PlayerLib.videodisplayer?.flush()
+    NativeFmp4PlayerLib.audioplayer?.flush()
+    
+    // Reset state
+    isPlaying = false
+    audioTimestamp = CMTime.zero
+    videoFormatDesc = nil
+    audioFormatDesc = nil
+    
+    // Reset demuxer
+    fmp4demux = SegmentParser(hevc: false)
+  }
+
+public func startStreaming() {
+    // Reset state before starting
+    isPlaying = false
+    audioTimestamp = CMTime.zero
+    
     self.socketSession = URLSession(configuration: .default)
     var request = URLRequest(url: NativeFmp4PlayerLib.url!)
     request.addValue("fmp4", forHTTPHeaderField: "Sec-WebSocket-Protocol")
     self.socketTask = socketSession?.webSocketTask(with: request)
-    NativeFmp4PlayerLib.synchro.addRenderer(NativeFmp4PlayerLib.audioplayer!)
-    NativeFmp4PlayerLib.synchro.addRenderer(NativeFmp4PlayerLib.videodisplayer!)
+    
+    // Add renderers to synchronizer
+    if let audioPlayer = NativeFmp4PlayerLib.audioplayer {
+        NativeFmp4PlayerLib.synchro.addRenderer(audioPlayer)
+    }
+    if let videoDisplayer = NativeFmp4PlayerLib.videodisplayer {
+        NativeFmp4PlayerLib.synchro.addRenderer(videoDisplayer)
+    }
+    
     NativeFmp4PlayerLib.synchro.rate = 1.0
     readMessage()
-  }
-
-  public func stopStreaming() {
-    socketTask?.cancel(with: .goingAway, reason: nil)
-    NativeFmp4PlayerLib.videodisplayer?.flush()
-    NativeFmp4PlayerLib.audioplayer?.flush()
   }
   
   
@@ -117,23 +152,16 @@ public class NativeFmp4PlayerLib: NSObject {
   }
 
   private func decodeFrame(_ data: Data) {
-    let frames: ParsedSegment = try! fmp4demux.parseSegment(payload: data)
+    let frames : ParsedSegment = try! fmp4demux.parseSegment(payload: data)
     
-    // Xử lý trên main queue để đảm bảo sync
-    DispatchQueue.main.async { [weak self] in
-        guard let self = self else { return }
-        
-        for frame in frames.videoFrames {
-            // Giữ nguyên timescale gốc (thường là 90000)
-            let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000)
-            self.decodeVideoFrame(frame.data, timestamp: timeStamp)
-        }
-        
-        for frame in frames.audioFrames {
-            // Dùng timescale 90000 rồi convert sang 48000
-            let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000)
-            self.decodeAudioFrame(frame.data, timestamp: timeStamp)
-        }
+    for frame in frames.videoFrames {
+      let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000);
+      decodeVideoFrame(frame.data, timestamp: timeStamp)
+    }
+      
+    for frame in frames.audioFrames {
+      let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 48000);
+      decodeAudioFrame(frame.data, timestamp: timeStamp)
     }
   }
   
