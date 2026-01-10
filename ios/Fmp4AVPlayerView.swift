@@ -19,7 +19,7 @@ public class Fmp4AVPlayerView: UIView {
         super.init(coder: coder)
         commonInit()
     }
-
+  
     private func commonInit() {
         backgroundColor = UIColor.systemGray5
         displayLayer.videoGravity = .resizeAspect

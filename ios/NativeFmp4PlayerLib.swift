@@ -51,26 +51,31 @@ public class NativeFmp4PlayerLib: NSObject {
   
   private var isPlaying = false
   private var audioTimestamp = CMTime.zero
+  // Thêm biến đếm buffer
+  private var audioBufferCount = 0
+  private var videoBufferCount = 0
+  private let minBufferBeforePlay = 60
   
   public override init() {
     self.socketSession = nil
     self.socketTask = nil
     self.videoDecoder = nil
-    let audioSession = AVAudioSession.sharedInstance()
-    try? audioSession.setCategory(.playback, mode: .default)
-    try? audioSession.setActive(true, options: [])
     super.init()
-    
   }
   
   static func attachId(Id : String) {
-    // 	
     self.url = URL(string: "wss://sfu-do-streaming.ermis.network/stream-gate/software/Ermis-streaming/\(Id)")
   }
 
   static func attachPlayer(videoplayer : AVSampleBufferDisplayLayer, audioplayers : AVSampleBufferAudioRenderer) {
     self.videodisplayer = videoplayer
-    self.audioplayer = audioplayers  
+    self.audioplayer = audioplayers
+  }
+  
+  private func setupAudio() {
+    let audioSession = AVAudioSession.sharedInstance()
+    try? audioSession.setCategory(.playback, mode: .default)
+    try? audioSession.setActive(true, options: [])
   }
   
   public func stopStreaming() {
@@ -90,24 +95,24 @@ public class NativeFmp4PlayerLib: NSObject {
     }
     
     // Flush renderers
-    NativeFmp4PlayerLib.videodisplayer?.flush()
+    if #available(iOS 17.0, *) {
+      NativeFmp4PlayerLib.videodisplayer?.sampleBufferRenderer.flush()
+    } else {
+      NativeFmp4PlayerLib.videodisplayer?.flush()
+    }
     NativeFmp4PlayerLib.audioplayer?.flush()
-    
     // Reset state
     isPlaying = false
     audioTimestamp = CMTime.zero
     videoFormatDesc = nil
     audioFormatDesc = nil
-    
-    // Reset demuxer
-    fmp4demux = SegmentParser(hevc: false)
+
+    // Reset buffer counts
+    audioBufferCount = 0
+    videoBufferCount = 0
   }
 
 public func startStreaming() {
-    // Reset state before starting
-    isPlaying = false
-    audioTimestamp = CMTime.zero
-    
     self.socketSession = URLSession(configuration: .default)
     var request = URLRequest(url: NativeFmp4PlayerLib.url!)
     request.addValue("fmp4", forHTTPHeaderField: "Sec-WebSocket-Protocol")
@@ -120,8 +125,6 @@ public func startStreaming() {
     if let videoDisplayer = NativeFmp4PlayerLib.videodisplayer {
         NativeFmp4PlayerLib.synchro.addRenderer(videoDisplayer)
     }
-    
-    NativeFmp4PlayerLib.synchro.rate = 1.0
     readMessage()
   }
   
@@ -137,7 +140,10 @@ public func startStreaming() {
                 guard !data.isEmpty else {
                   return
                 }
-              self.decodeFrame(data.dropFirst())
+                guard self.videoFormatDesc != nil || self.audioFormatDesc != nil else {
+                  return
+                }
+                self.decodeFrame(data.dropFirst())
               case .string(let config):
                 guard !config.isEmpty else {
                   return
@@ -155,6 +161,7 @@ public func startStreaming() {
     let frames : ParsedSegment = try! fmp4demux.parseSegment(payload: data)
     
     for frame in frames.videoFrames {
+      
       let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000);
       decodeVideoFrame(frame.data, timestamp: timeStamp)
     }
@@ -166,7 +173,6 @@ public func startStreaming() {
   }
   
   private func decodeVideoFrame(_ data: Data, timestamp: CMTime) {
-    
       guard let formatDesc = videoFormatDesc else {
           print("Video format not configured")
           return
@@ -212,7 +218,6 @@ public func startStreaming() {
           presentationTimeStamp: timestamp,
           decodeTimeStamp: .invalid
       )
-    print("Timing Video: ",timestamp)
       var sampleBuffer: CMSampleBuffer?
       status = CMSampleBufferCreateReady(
           allocator: kCFAllocatorDefault,
@@ -233,20 +238,21 @@ public func startStreaming() {
 
       // Enqueue to video layer
     if NativeFmp4PlayerLib.videodisplayer!.isReadyForMoreMediaData {
-      enqueueVideo(sampleBuffer)
-//           Start playback if not started
-          if !isPlaying {
-              NativeFmp4PlayerLib.synchro.setRate(1.0, time: timestamp)
-              isPlaying = true
-              print("Playback started")
-          }
-      } else {
-          print("Video layer not ready")
-      }
+        enqueueVideo(sampleBuffer)
+        videoBufferCount += 1
+        
+        // Chỉ bắt đầu phát khi đã buffer đủ cả audio và video
+        if !isPlaying && audioBufferCount >= minBufferBeforePlay && videoBufferCount >= minBufferBeforePlay {
+            NativeFmp4PlayerLib.synchro.setRate(1.0, time: timestamp)
+            isPlaying = true
+            print("Playback started after buffering \(audioBufferCount) audio, \(videoBufferCount) video frames")
+        }
+    } else {
+        print("Video layer not ready")
+    }
   }
   
   private func decodeAudioFrame(_ data: Data, timestamp: CMTime) {
-   
       guard let formatDesc = audioFormatDesc else {
           print("Audio format not configured")
           return
@@ -296,14 +302,13 @@ public func startStreaming() {
       // Calculate continuous timestamp
       let currentTimestamp: CMTime
       if audioTimestamp == .zero {
-          currentTimestamp = timestamp
+        currentTimestamp = timestamp
       } else {
           let frameDuration = CMTime(value: 1024, timescale: 48000)
           currentTimestamp = CMTimeAdd(audioTimestamp, frameDuration)
       }
       audioTimestamp = currentTimestamp
-  
-      // Create packet description
+
       var packetDesc = AudioStreamPacketDescription(
           mStartOffset: 0,
           mVariableFramesInPacket: 0,
@@ -317,7 +322,7 @@ public func startStreaming() {
           dataBuffer: blockBuffer,
           formatDescription: formatDesc,
           sampleCount: 1,
-          presentationTimeStamp: currentTimestamp,
+          presentationTimeStamp: audioTimestamp,
           packetDescriptions: &packetDesc,
           sampleBufferOut: &sampleBuffer
       )
@@ -326,7 +331,9 @@ public func startStreaming() {
           print("Failed to create audio sample buffer: \(status)")
           return
       }
+    
     enqueueAudio(sampleBuffer)
+    audioBufferCount += 1
   }
   
   private func setupConfigFormat(_ config : String) {
@@ -381,14 +388,6 @@ public func startStreaming() {
   }
   
   private func createAudioFormatDescription(_ aaCData: Data, _ audio_config : AudioConfig?) -> CMAudioFormatDescription? {
-    let aacCNSData = aaCData as CFData
-        
-        let extensions: CFDictionary = [
-            kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms as String: [
-                "asc": aacCNSData
-            ]
-        ] as CFDictionary
-    
     let sampleRate = Float64(audio_config!.sampleRate)
     var formatDesc: CMAudioFormatDescription?
     var asbd = AudioStreamBasicDescription(
@@ -400,20 +399,21 @@ public func startStreaming() {
       mBytesPerFrame: 0,
       mChannelsPerFrame: UInt32(audio_config?.numberOfChannels ?? 2),
       mBitsPerChannel: 0,
-      mReserved: 0)
- 
-    let status =
-      CMAudioFormatDescriptionCreate(
-          allocator: kCFAllocatorDefault,
-          asbd: &asbd,
-          layoutSize: 0,
-          layout: nil,
-          magicCookieSize: 0,
-          magicCookie: nil,
-          extensions: extensions,
-          formatDescriptionOut: &formatDesc
-      )
-  
+      mReserved: 0
+    )
+
+    let status = aaCData.withUnsafeBytes { ptr in
+          return CMAudioFormatDescriptionCreate(
+              allocator: kCFAllocatorDefault,
+              asbd: &asbd,
+              layoutSize: 0,
+              layout: nil,
+              magicCookieSize: aaCData.count,
+              magicCookie: ptr.baseAddress,
+              extensions: nil,
+              formatDescriptionOut: &formatDesc
+          )
+      }
     
       guard status == noErr else {
         print("error")
@@ -429,40 +429,18 @@ public func startStreaming() {
 
   
   private func enqueueVideo(_ sb: CMSampleBuffer, retries: Int = 3) {
-    print(NativeFmp4PlayerLib.videodisplayer!.isReadyForMoreMediaData)
     if NativeFmp4PlayerLib.videodisplayer!.isReadyForMoreMediaData {
         NativeFmp4PlayerLib.videodisplayer!.enqueue(sb)
-      let pts = CMSampleBufferGetPresentationTimeStamp(sb)
-          switch NativeFmp4PlayerLib.videodisplayer!.status {
-          case .rendering:
-              print("[Video] Enqueued audio at PTS: \(pts). Status: rendering")
-          case .failed:
-              print("[Video] Renderer failed: \(NativeFmp4PlayerLib.videodisplayer!.error?.localizedDescription ?? "Unknown")")
-          default:
-              print("[Video] Enqueued audio at PTS: \(pts). Status: \(NativeFmp4PlayerLib.videodisplayer!.status)")
-          }
-      
     }  else {
-        print("error")
+        print("video error")
     }
   }
   
   private func enqueueAudio(_ sb: CMSampleBuffer, retries: Int = 3) {
-    print(NativeFmp4PlayerLib.audioplayer!.isReadyForMoreMediaData)
     if NativeFmp4PlayerLib.audioplayer!.isReadyForMoreMediaData {
         NativeFmp4PlayerLib.audioplayer!.enqueue(sb)
-      let pts = CMSampleBufferGetPresentationTimeStamp(sb)
-          switch NativeFmp4PlayerLib.audioplayer!.status {
-          case .rendering:
-              print("[Audio] Enqueued audio at PTS: \(pts). Status: rendering")
-          case .failed:
-              print("[Audio] Renderer failed: \(NativeFmp4PlayerLib.audioplayer!.error?.localizedDescription ?? "Unknown")")
-          default:
-              print("[Audio] Enqueued audio at PTS: \(pts). Status: \(NativeFmp4PlayerLib.audioplayer!.status)")
-          }
-      
     }  else {
-        print("error")
+        print("audio error")
     }
   }
 }
