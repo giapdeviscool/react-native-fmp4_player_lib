@@ -56,6 +56,7 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
   private var videoBufferCount = 0
   private let minBufferBeforePlay = 45
   
+    
   private let maxReconnectAttempts = 3
   private var reconnectAttempts = 1
   public override init() {
@@ -65,6 +66,8 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
     super.init()
   }
   
+
+    
   static func attachId(Id : String) {
     self.url = URL(string: "wss://sfu-do-streaming.ermis.network/stream-gate/software/Ermis-streaming/\(Id)")
   }
@@ -98,9 +101,9 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
       
     // Flush renderers
     if #available(iOS 17.0, *) {
-      NativeFmp4PlayerLib.videodisplayer?.sampleBufferRenderer.flush()
+        NativeFmp4PlayerLib.videodisplayer?.sampleBufferRenderer.flush(removingDisplayedImage: true)
     } else {
-      NativeFmp4PlayerLib.videodisplayer?.flush()
+      NativeFmp4PlayerLib.videodisplayer?.flushAndRemoveImage()
     }
     NativeFmp4PlayerLib.audioplayer?.flush()
     // Reset state
@@ -138,7 +141,7 @@ public func startStreaming() {
         case .failure(let error):
           let nsErr = error as NSError
           //print("WebSocket receive failed: domain=\(nsErr.domain), code=\(nsErr.code), userInfo=\(nsErr.userInfo)")
-          if nsErr.code == 57 || nsErr.code == -1009 {
+          if nsErr.code == -1009 {
               self.scheduleReconnect()
           }
         case .success(let message):
