@@ -36,8 +36,4 @@ public class Fmp4AVPlayerView: UIView {
         super.layoutSubviews()
         displayLayer.frame = bounds
     }
-    
- 
-    
-
 }

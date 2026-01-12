@@ -35,7 +35,7 @@ struct StreamConfig : Codable{
 
 
 @objcMembers
-public class NativeFmp4PlayerLib: NSObject {
+public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
   private var fmp4demux = SegmentParser(hevc: false)
   private static var url : URL?
   private var socketSession : URLSession?
@@ -54,8 +54,10 @@ public class NativeFmp4PlayerLib: NSObject {
   // Thêm biến đếm buffer
   private var audioBufferCount = 0
   private var videoBufferCount = 0
-  private let minBufferBeforePlay = 60
+  private let minBufferBeforePlay = 45
   
+  private let maxReconnectAttempts = 3
+  private var reconnectAttempts = 1
   public override init() {
     self.socketSession = nil
     self.socketTask = nil
@@ -93,7 +95,7 @@ public class NativeFmp4PlayerLib: NSObject {
     if let videoDisplayer = NativeFmp4PlayerLib.videodisplayer {
         NativeFmp4PlayerLib.synchro.removeRenderer(videoDisplayer, at: .zero) { _ in }
     }
-    
+      
     // Flush renderers
     if #available(iOS 17.0, *) {
       NativeFmp4PlayerLib.videodisplayer?.sampleBufferRenderer.flush()
@@ -113,7 +115,7 @@ public class NativeFmp4PlayerLib: NSObject {
   }
 
 public func startStreaming() {
-    self.socketSession = URLSession(configuration: .default)
+    self.socketSession = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
     var request = URLRequest(url: NativeFmp4PlayerLib.url!)
     request.addValue("fmp4", forHTTPHeaderField: "Sec-WebSocket-Protocol")
     self.socketTask = socketSession?.webSocketTask(with: request)
@@ -133,8 +135,14 @@ public func startStreaming() {
     socketTask?.resume();
     socketTask?.receive { result in
       switch result {
-        case .failure(let error): print("fail : \(error)")
+        case .failure(let error):
+          let nsErr = error as NSError
+          //print("WebSocket receive failed: domain=\(nsErr.domain), code=\(nsErr.code), userInfo=\(nsErr.userInfo)")
+          if nsErr.code == 57 || nsErr.code == -1009 {
+              self.scheduleReconnect()
+          }
         case .success(let message):
+            self.reconnectAttempts = 1
             switch message {
               case .data(let data):
                 guard !data.isEmpty else {
@@ -150,6 +158,7 @@ public func startStreaming() {
                 }
                  self.setupConfigFormat(config)
               @unknown default:
+                print("rtmp stream is disconnected")
                 break
             }
         self.readMessage()
@@ -157,11 +166,28 @@ public func startStreaming() {
     }
   }
 
+    private func scheduleReconnect() {
+        print("Trying to reconnect..., Attempts : ", reconnectAttempts)
+        guard reconnectAttempts <= maxReconnectAttempts else {
+            print("Network is down, close Stream")
+            stopStreaming()
+            return
+        }
+        reconnectAttempts += 1
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+            guard let self = self else { return }
+            
+            // Cleanup trước: stopStreaming() sẽ nil session + task + flush renderers
+            self.stopStreaming()
+            // Tạo lại session + task và bắt đầu
+            self.startStreaming()
+        }
+    }
   private func decodeFrame(_ data: Data) {
     let frames : ParsedSegment = try! fmp4demux.parseSegment(payload: data)
     
     for frame in frames.videoFrames {
-      
       let timeStamp = CMTime(value: CMTimeValue(frame.timestamp!), timescale: 90000);
       decodeVideoFrame(frame.data, timestamp: timeStamp)
     }
