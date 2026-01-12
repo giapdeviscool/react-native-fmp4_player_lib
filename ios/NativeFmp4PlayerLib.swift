@@ -54,7 +54,7 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
   // Thêm biến đếm buffer
   private var audioBufferCount = 0
   private var videoBufferCount = 0
-  private let minBufferBeforePlay = 45
+  private let minBufferBeforePlay = 20
   
     
   private let maxReconnectAttempts = 3
@@ -118,6 +118,7 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
   }
 
 public func startStreaming() {
+
     self.socketSession = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
     var request = URLRequest(url: NativeFmp4PlayerLib.url!)
     request.addValue("fmp4", forHTTPHeaderField: "Sec-WebSocket-Protocol")
@@ -140,7 +141,7 @@ public func startStreaming() {
       switch result {
         case .failure(let error):
           let nsErr = error as NSError
-          //print("WebSocket receive failed: domain=\(nsErr.domain), code=\(nsErr.code), userInfo=\(nsErr.userInfo)")
+          print("WebSocket receive failed: domain=\(nsErr.domain), code=\(nsErr.code), userInfo=\(nsErr.userInfo)")
           if nsErr.code == -1009 {
               self.scheduleReconnect()
           }
@@ -151,9 +152,7 @@ public func startStreaming() {
                 guard !data.isEmpty else {
                   return
                 }
-                guard self.videoFormatDesc != nil || self.audioFormatDesc != nil else {
-                  return
-                }
+                
                 self.decodeFrame(data.dropFirst())
               case .string(let config):
                 guard !config.isEmpty else {
@@ -187,6 +186,7 @@ public func startStreaming() {
             self.startStreaming()
         }
     }
+    
   private func decodeFrame(_ data: Data) {
     let frames : ParsedSegment = try! fmp4demux.parseSegment(payload: data)
     
@@ -370,13 +370,16 @@ public func startStreaming() {
     guard streamconfig != nil else {
       return
     }
+      print("Stream config received:")
+          print("  Video: \(streamconfig!.videoConfig.codedWidth)x\(streamconfig!.videoConfig.codedHeight)")
+          print("  Audio: \(streamconfig!.audioConfig.sampleRate)Hz, \(streamconfig!.audioConfig.numberOfChannels)ch")
     let video_description = streamconfig?.videoConfig.description
     let audio_description = streamconfig?.audioConfig.description
     
     let accData = Data(base64Encoded: audio_description!)
     let avccData = Data(base64Encoded: video_description!)
     audioFormatDesc = createAudioFormatDescription(accData!, streamconfig?.audioConfig);
-    videoFormatDesc = createVideoFormatDescription(avccData!)
+      videoFormatDesc = createVideoFormatDescription(avccData!, streamconfig!.videoConfig)
   }
   
   private func getStreamConfig(config : String) -> StreamConfig? {
@@ -389,7 +392,7 @@ public func startStreaming() {
     }
   }
   
-  private func createVideoFormatDescription(_ avcCData: Data) -> CMVideoFormatDescription? {
+  private func createVideoFormatDescription(_ avcCData: Data, _ videoConfig: VideoConfig) -> CMVideoFormatDescription? {
       let avcCNSData = avcCData as CFData
       
       let extensions: CFDictionary = [
@@ -397,14 +400,15 @@ public func startStreaming() {
               "avcC": avcCNSData
           ]
       ] as CFDictionary
-     
+      let width = Int32(videoConfig.codedWidth)
+      let height = Int32(videoConfig.codedHeight)
       var formatDesc: CMVideoFormatDescription?
       
       let status = CMVideoFormatDescriptionCreate(
           allocator: kCFAllocatorDefault,
           codecType: kCMVideoCodecType_H264,
-          width: 1280,
-          height: 720,
+          width: width,
+          height: height,
           extensions: extensions,
           formatDescriptionOut: &formatDesc
       )

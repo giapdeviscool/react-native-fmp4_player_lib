@@ -21,7 +21,7 @@ public class Fmp4AVPlayerView: UIView {
     }
   
     private func commonInit() {
-        backgroundColor = UIColor.systemGray5
+        backgroundColor = .black
         displayLayer.videoGravity = .resizeAspect
         displayLayer.backgroundColor = UIColor.black.cgColor
         layer.addSublayer(displayLayer)
