@@ -54,7 +54,7 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
   // Thêm biến đếm buffer
   private var audioBufferCount = 0
   private var videoBufferCount = 0
-  private let minBufferBeforePlay = 20
+  private let minBufferBeforePlay = 3
   
     
   private let maxReconnectAttempts = 3
@@ -65,8 +65,6 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
     self.videoDecoder = nil
     super.init()
   }
-  
-
     
   static func attachId(Id : String) {
     self.url = URL(string: "wss://sfu-do-streaming.ermis.network/stream-gate/software/Ermis-streaming/\(Id)")
