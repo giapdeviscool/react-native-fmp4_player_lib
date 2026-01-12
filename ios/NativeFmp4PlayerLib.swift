@@ -160,7 +160,6 @@ public func startStreaming() {
                 }
                  self.setupConfigFormat(config)
               @unknown default:
-                print("rtmp stream is disconnected")
                 break
             }
         self.readMessage()
@@ -370,9 +369,7 @@ public func startStreaming() {
     guard streamconfig != nil else {
       return
     }
-      print("Stream config received:")
-          print("  Video: \(streamconfig!.videoConfig.codedWidth)x\(streamconfig!.videoConfig.codedHeight)")
-          print("  Audio: \(streamconfig!.audioConfig.sampleRate)Hz, \(streamconfig!.audioConfig.numberOfChannels)ch")
+
     let video_description = streamconfig?.videoConfig.description
     let audio_description = streamconfig?.audioConfig.description
     
