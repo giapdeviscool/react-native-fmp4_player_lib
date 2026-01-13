@@ -35,7 +35,7 @@ struct StreamConfig : Codable{
 
 
 @objcMembers
-public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
+public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDelegate {
   private var fmp4demux = SegmentParser(hevc: false)
   private static var url : URL?
   private var socketSession : URLSession?
@@ -57,7 +57,7 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
   private let minBufferBeforePlay = 3
   
     
-  private let maxReconnectAttempts = 3
+  private let maxReconnectAttempts = 10
   private var reconnectAttempts = 1
   public override init() {
     self.socketSession = nil
@@ -115,9 +115,11 @@ public class NativeFmp4PlayerLib: NSObject, URLSessionWebSocketDelegate {
     videoBufferCount = 0
   }
 
-public func startStreaming() {
+    public func startStreaming() {
 
-    self.socketSession = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
+    // Quan trọng: set cả URLSessionTaskDelegate để nhận didCompleteWithError
+    let config = URLSessionConfiguration.default
+    self.socketSession = URLSession(configuration: config, delegate: self, delegateQueue: .main)
     var request = URLRequest(url: NativeFmp4PlayerLib.url!)
     request.addValue("fmp4", forHTTPHeaderField: "Sec-WebSocket-Protocol")
     self.socketTask = socketSession?.webSocketTask(with: request)
@@ -133,6 +135,34 @@ public func startStreaming() {
   }
   
   
+    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        // Đóng sạch sẽ (server/client gửi close frame) sẽ vào đây
+        let reasonText = reason.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        print("WebSocket didClose. code=\(closeCode.rawValue), reason=\(reasonText)")
+        // Không tự reconnect ở đây vì thường đây là đóng chủ động/clean. Tùy use-case:
+        // scheduleReconnect() nếu bạn muốn tái kết nối ngay cả khi đóng sạch.
+    }
+    
+    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+        print("WebSocket didOpen")
+        // Reset lại bộ đếm reconnect khi mở thành công
+        reconnectAttempts = 1
+    }
+
+    // Bắt lỗi khi task kết thúc do mất mạng/timeout…
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        guard let error = error else {
+            // Task hoàn tất sạch sẽ, không lỗi
+            return
+        }
+        let nsErr = error as NSError
+        print("WebSocket task didCompleteWithError: domain=\(nsErr.domain), code=\(nsErr.code), userInfo=\(nsErr.userInfo)")
+        // Mất mạng thường là NSURLErrorDomain / -1009
+        if nsErr.code == -1009 || nsErr.code == NSURLErrorTimedOut || nsErr.code == NSURLErrorNetworkConnectionLost {
+            scheduleReconnect()
+        }
+    }
+    
   private func readMessage() {
     socketTask?.resume();
     socketTask?.receive { result in
@@ -140,7 +170,7 @@ public func startStreaming() {
         case .failure(let error):
           let nsErr = error as NSError
           print("WebSocket receive failed: domain=\(nsErr.domain), code=\(nsErr.code), userInfo=\(nsErr.userInfo)")
-          if nsErr.code == -1009 {
+          if nsErr.code == -1009 || nsErr.code == NSURLErrorNetworkConnectionLost || nsErr.code == NSURLErrorTimedOut {
               self.scheduleReconnect()
           }
         case .success(let message):
